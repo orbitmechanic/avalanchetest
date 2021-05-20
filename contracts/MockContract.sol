@@ -1,4 +1,6 @@
-pragma solidity ^0.6.4;
+pragma solidity ^0.7.4;
+
+// SPDX-License-Identifier: UNLICENSED
 
 ///////////////////////////////////////////////
 // This contract is taken from Gnosis and is 
@@ -109,7 +111,9 @@ contract MockContract is MockInterface {
 	uint invocations;
 	uint resetCount;
 
-	constructor() public {
+	event Receive (address, uint);
+
+	constructor() {
 		calldataMocks[MOCKS_LIST_START] = MOCKS_LIST_END;
 		methodIdMocks[SENTINEL_ANY_MOCKS] = SENTINEL_ANY_MOCKS;
 	}
@@ -248,16 +252,16 @@ contract MockContract is MockInterface {
 		trackMethodIdMock(method);	
 	}
 
-	function invocationCount() override external returns (uint) {
+	function invocationCount() override external view returns (uint) {
 		return invocations;
 	}
 
-	function invocationCountForMethod(bytes calldata call) override external returns (uint) {
+	function invocationCountForMethod(bytes calldata call) override external view returns (uint) {
 		bytes4 method = bytesToBytes4(call);
 		return methodIdInvocations[keccak256(abi.encodePacked(resetCount, method))];
 	}
 
-	function invocationCountForCalldata(bytes calldata call) override external returns (uint) {
+	function invocationCountForCalldata(bytes calldata call) override external view returns (uint) {
 		return calldataInvocations[keccak256(abi.encodePacked(resetCount, call))];
 	}
 
@@ -331,6 +335,11 @@ contract MockContract is MockInterface {
 		calldataInvocations[keccak256(abi.encodePacked(resetCount, originalMsgData))] += 1;
 	}
 
+	receive () payable external {
+		// Just here to clear compiler warning
+		emit Receive (msg.sender, msg.value);
+	}
+	
 	fallback () payable external {
 		bytes4 methodId;
 		assembly {

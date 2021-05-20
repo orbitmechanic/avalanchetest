@@ -1,6 +1,8 @@
+pragma solidity >= 0.7.4;
+
 // contracts/ERC721.sol
-// spdx-license-identifier: mit
-pragma solidity >= 0.6.2;
+// SPDX-License-Identifier: UNLICENSED
+
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
