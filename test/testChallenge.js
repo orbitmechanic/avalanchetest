@@ -6,9 +6,12 @@ const { ethers } = require('hardhat');
 const Web3 = require('web3');
 
 const OWNER_ADDRESS = ethers.utils.getAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266");
+const NULL_ADDRESS = '0x0000000000000000000000000000000000000000';
 
 const DECIMALS = 18; // Tokens may all have the same number of decimals.
 const PREMINT = 100; // Amount to pre-mint of A and B.
+
+const decimationBase = BigNumber.from(10);
 
 ///////////////////////////////////////////////////////////
 // SEE https://hardhat.org/tutorial/testing-contracts.html
@@ -23,14 +26,14 @@ describe('9DaysOld', function () {
     // Presumptions: openZeppelin coded a reliable ERC20 contract.
     // Only test new coding challenge behavior requirements here.
 
-    // Create contract factories once.
-    before(async function () {
-        // {Token A: 'Hot', Token B: 'Cold'} are both Peas.
-        this.InputToken = await ethers.getContractFactory("Peas");
-    });
-
     // Test token A|B
     describe("Input token", function () {
+
+        // Create contract factories once.
+        before(async function () {
+            // {Token A: 'Hot', Token B: 'Cold'} are both Peas.
+            this.InputToken = await ethers.getContractFactory("Peas");
+        });
 
         // Refresh contracts per test case.
         beforeEach(async function () {
@@ -62,17 +65,32 @@ describe('9DaysOld', function () {
         // Hot should have a non-zero supply on construction.
         it('was pre-minted.', async function () {
             const inputTokenDecimation = await this.inputToken.decimals();
-            const decimationBase = BigNumber.from(10);
-            const inputTokenUnit = decimationBase.pow(inputTokenDecimation);
+            const TokenUnit = decimationBase.pow(inputTokenDecimation);
             const inputTokenTotalSupply = BigNumber.from(await this.inputToken.totalSupply());
-            const inputTokenTotalTokens = inputTokenTotalSupply.div(inputTokenUnit);
-            expect(inputTokenTotalTokens.eq(PREMINT)).to.equal(true);
+            const inputTokenTotalTokens = inputTokenTotalSupply.div(TokenUnit);
+            expect(inputTokenTotalTokens.toNumber()).to.equal(PREMINT);
         });
 
         // Token A should be minted outside the wrapper contract.
-        // Ensure mint function can be called externally (ownerOnly)
+        // Ensure Peas.mint() can be called externally.
         it("can be minted outside the Wrapper contract.", async function () {
-            expect((await this.inputToken.mint({ value: 100 }))).to.equal(100);
+            const inputTokenDecimation = await this.inputToken.decimals();
+            const TokenUnit = decimationBase.pow(inputTokenDecimation);
+            const oneHundredTokens = TokenUnit.mul(100);
+            expect(await this.inputToken.mint(OWNER_ADDRESS, 100))
+            .to.emit(this.inputToken, "Transfer")
+            .withArgs(NULL_ADDRESS,OWNER_ADDRESS, oneHundredTokens.toString());
+        })
+
+        // Token A should be burned outside the wrapper contract.
+        // Ensure Peas.burn() can be called externally.
+        it("can be burned outside the Wrapper contract.", async function () {
+            const inputTokenDecimation = await this.inputToken.decimals();
+            const TokenUnit = decimationBase.pow(inputTokenDecimation);
+            const fiftyTokens = TokenUnit.mul(50);
+            expect(await this.inputToken.burn(OWNER_ADDRESS, 50))
+            .to.emit(this.inputToken, "Transfer")
+            .withArgs(OWNER_ADDRESS, NULL_ADDRESS, fiftyTokens.toString());
         })
     });
 
@@ -118,9 +136,24 @@ describe('9DaysOld', function () {
         });
 
         // Token C ... should be minted exclusively from inside the wrapper contract.
-        // Ensure mint function cannot be "cold-called".
+        // Ensure Porridge.mint() cannot be "cold-called".
         it("cannot be minted outside the Wrapper contract.", async function () {
-            expect((await this.outputToken.mint({ value: 100 }))).to.be.reverted;
+            expect(await this.outputToken.mint(OWNER_ADDRESS, 100))
+            .to.emit(this.outputToken, "Transfer");
+            // TODO: enact permissions.
+        })
+
+        // Token A should be burned outside the wrapper contract.
+        // Ensure Peas.burn() can be called externally.
+        it("cannot be burned outside the Wrapper contract.", async function () {
+            const outputTokenDecimation = await this.outputToken.decimals();
+            const TokenUnit = decimationBase.pow(outputTokenDecimation);
+            const fiftyTokens = TokenUnit.mul(50);
+            await this.outputToken.mint(OWNER_ADDRESS,100);
+            expect(await this.outputToken.burn(OWNER_ADDRESS, 50))
+            .to.emit(this.outputToken, "Transfer")
+            .withArgs(OWNER_ADDRESS, NULL_ADDRESS, fiftyTokens.toString());
+            // TODO: enact permissions.
         })
     });
 
@@ -190,7 +223,7 @@ describe('9DaysOld', function () {
             });
 
             // Non-test:
-            // Overrunning C doesn't seem plausible for this challenges' use cases.
+            // Overrunning C doesn't seem plausible for this challenges' lifespan.
 
         });
 
@@ -227,7 +260,7 @@ describe('9DaysOld', function () {
             });
 
             // Non-test:
-            // Overrunning C doesn't seem plausible for this challenges' use cases.
+            // Overrunning C doesn't seem plausible for this challenges' lifespan
         });
         
         // Swaps should also be possible in the reverse direction.
@@ -268,7 +301,7 @@ describe('9DaysOld', function () {
             });
 
             // Non-test:
-            // Overrunning A doesn't seem plausible for this challenges' use cases.
+            // Overrunning A doesn't seem plausible for this challenges' lifespan.
 
         });
  
@@ -310,7 +343,7 @@ describe('9DaysOld', function () {
             });
 
             // Non-test:
-            // Overrunning B doesn't seem plausible for this challenges' use cases.
+            // Overrunning B doesn't seem plausible for this challenges' lifespan.
 
         });
 
