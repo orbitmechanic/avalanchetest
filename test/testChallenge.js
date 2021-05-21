@@ -141,6 +141,10 @@ describe('9DaysOld', function () {
             const outputTokenDecimation = await this.outputToken.decimals();
             const TokenUnit = decimationBase.pow(outputTokenDecimation);
             const oneHundredTokens = TokenUnit.mul(100);
+
+            // Assign OWNER_ADDRESS the MINTER_ROLE
+            await this.outputToken.setMinter(OWNER_ADDRESS); 
+
             expect(await this.outputToken.mint(OWNER_ADDRESS, 100))
             .to.emit(this.outputToken, "Transfer")
             .withArgs(NULL_ADDRESS, OWNER_ADDRESS, oneHundredTokens.toString());
@@ -149,8 +153,8 @@ describe('9DaysOld', function () {
         // Token C ... should be minted exclusively from inside the wrapper contract.
         // Ensure Porridge.mint() cannot be "cold-called".
         it("cannot be minted by an unlicensed address.", async function () {
-            const addressList = await ethers.getSigners();
-            await expect(this.outputToken.connect(addressList[1]).mint(OWNER_ADDRESS, 100))
+            // No MINTER_ROLE assigned.
+            await expect(this.outputToken.mint(OWNER_ADDRESS, 100))
             .to.be.reverted;
         });
 
