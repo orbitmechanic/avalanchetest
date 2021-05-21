@@ -2,49 +2,60 @@ pragma solidity 0.7.4;
 
 // SPDX-License-Identifier: UNLICENSED
 
+/// @dev works for both Peas and Porridge contracts:
+abstract contract PotInterface {
+    function balanceOf(address) public virtual returns(uint);
+    function mint(address, uint) public virtual;
+    function burn(address, uint) public virtual;
+}
+
 /// @title Wrapper 
 /// @author Bob Clark 
 /// @notice for swapping specific ERC20 tokens, A | B <--> C, 1:1
 /// @dev For academic use only
 contract Wrapper {
 
-    address A; // Address of A token
-    address B; // Address of B token
-    address C; // Address of C token
+    address Hot; // Address of Peas token "Hot"
+    address Cold; // Address of Peas token "Cold"
+    address Porridge; // Address of "Porridge" token
+    PotInterface porridge; // Porridge contract interface.
 
     /// @notice Records addresses of affected tokens
-    /// @param A_ address of A token contract
-    /// @param B_ address of B token contract
-    /// @param C_ address of C token contract
-    constructor(address A_, address B_, address C_) {
-        A = A_; B = B_; C = C_;
+    /// @param Hot_ address of Peas contract "Hot" token
+    /// @param Cold_ address of Peas contract "Cold" token
+    /// @param Porridge_ address of Porridge contract token
+    constructor(address Hot_, address Cold_, address Porridge_) {
+        Hot = Hot_; Cold = Cold_; Porridge = Porridge_;
+        porridge = PotInterface(Porridge);
     }
 
-    /// @notice Swap A | B for an equal amount of C.
-    /// @param token_ address of A | B token to swap
-    /// @param amount amount of 1:1 C token to receive
-    function swap(address token_, uint amount) external {
+    /// @notice Swap Hot or Cold Peas for an equal amount of Porridge.
+    /// @param peas_ address of Hot or Cold Peas token to swap
+    /// @param amount amount of 1:1 Porridge token to receive
+    function swap(address peas_, uint amount) external {
         // Checks
-        require(token_ == A || token_ = B, 'unknown input token.');
-        require(token_.balanceOf(msg.sender) >= amount, 
-            'insufficient input tokens');
+        require(peas_ == Hot || peas_ == Cold, "lukewarm peas.");
+        PotInterface peas = PotInterface(peas_);
+        require(peas.balanceOf(msg.sender) >= amount, 
+            'insufficient peas.');
         // Effects
-        token_.burn(msg.sender, amount);
+        peas.burn(msg.sender, amount);
         // Interactions
-        C.mint(amount);
+        porridge.mint(msg.sender, amount);
     }
 
-    /// @notice Swap C for an equal amount of A | B.
-    /// @param token_ address of A | B token to receive
-    /// @param amount amount of 1:1 C token to swap
-    function unswap(address token_, uint amount) external {
+    /// @notice Swap Porridge for an equal amount of Hot or Cold Peas.
+    /// @param peas_ address of Hot or Cold Peas token to receive
+    /// @param amount amount of 1:1 Porridge token to swap
+    function unswap(address peas_, uint amount) external  {
         // Checks
-        require(token_ == A || token_ = B, 'unknown output token.');
-        require(C.balanceOf(msg.sender) >= amount, 
-            'insufficient input tokens');
+        require(peas_ == Hot || peas_ == Cold, "lukewarm peas.");
+        require(porridge.balanceOf(msg.sender) >= amount, 
+            'insufficient porridge.');
         // Effects
-        C.burn(msg.sender, amount);
-        // Interacdtions
-        token_.mint(amount);
+        porridge.burn(msg.sender, amount);
+        // Interactions
+        PotInterface peas= PotInterface(peas_);
+        peas.mint(msg.sender, amount);
     }
 }
