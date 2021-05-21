@@ -73,7 +73,7 @@ describe('9DaysOld', function () {
 
         // Token A should be minted outside the wrapper contract.
         // Ensure Peas.mint() can be called externally.
-        it("can be minted outside the Wrapper contract.", async function () {
+        it("can be minted.", async function () {
             const inputTokenDecimation = await this.inputToken.decimals();
             const TokenUnit = decimationBase.pow(inputTokenDecimation);
             const oneHundredTokens = TokenUnit.mul(100);
@@ -84,7 +84,7 @@ describe('9DaysOld', function () {
 
         // Token A should be burned outside the wrapper contract.
         // Ensure Peas.burn() can be called externally.
-        it("can be burned outside the Wrapper contract.", async function () {
+        it("can be burned.", async function () {
             const inputTokenDecimation = await this.inputToken.decimals();
             const TokenUnit = decimationBase.pow(inputTokenDecimation);
             const fiftyTokens = TokenUnit.mul(50);
@@ -105,7 +105,7 @@ describe('9DaysOld', function () {
 
         // Refresh contracts per test case.
         beforeEach(async function () {
-            this.outputToken = await this.OutputToken.deploy();
+            this.outputToken = await this.OutputToken.deploy(OWNER_ADDRESS);
             await this.outputToken.deployed();
         });
 
@@ -136,16 +136,27 @@ describe('9DaysOld', function () {
         });
 
         // Token C ... should be minted exclusively from inside the wrapper contract.
-        // Ensure Porridge.mint() cannot be "cold-called".
-        it("cannot be minted outside the Wrapper contract.", async function () {
+        // Ensure Porridge.mint() can be called from a "licensed" address:
+        it("can be minted by the licensed address.", async function () {
+            const outputTokenDecimation = await this.outputToken.decimals();
+            const TokenUnit = decimationBase.pow(outputTokenDecimation);
+            const oneHundredTokens = TokenUnit.mul(100);
             expect(await this.outputToken.mint(OWNER_ADDRESS, 100))
-            .to.emit(this.outputToken, "Transfer");
-            // TODO: enact permissions.
-        })
+            .to.emit(this.outputToken, "Transfer")
+            .withArgs(NULL_ADDRESS, OWNER_ADDRESS, oneHundredTokens.toString());
+        });
 
-        // Token A should be burned outside the wrapper contract.
-        // Ensure Peas.burn() can be called externally.
-        it("cannot be burned outside the Wrapper contract.", async function () {
+        // Token C ... should be minted exclusively from inside the wrapper contract.
+        // Ensure Porridge.mint() cannot be "cold-called".
+        it("cannot be minted by an unlicensed address.", async function () {
+            const addressList = await ethers.getSigners();
+            await expect(this.outputToken.connect(addressList[1]).mint(OWNER_ADDRESS, 100))
+            .to.be.reverted;
+        });
+
+        // Token C should be (burned exclusively inside wrapper contract).
+        // Ensure Porridge.burn() can be called externally.
+        it("can be burned.", async function () {
             const outputTokenDecimation = await this.outputToken.decimals();
             const TokenUnit = decimationBase.pow(outputTokenDecimation);
             const fiftyTokens = TokenUnit.mul(50);
@@ -153,8 +164,8 @@ describe('9DaysOld', function () {
             expect(await this.outputToken.burn(OWNER_ADDRESS, 50))
             .to.emit(this.outputToken, "Transfer")
             .withArgs(OWNER_ADDRESS, NULL_ADDRESS, fiftyTokens.toString());
-            // TODO: enact permissions.
-        })
+        });
+
     });
 
     // Test Wrapper contract (not an ERC20).
