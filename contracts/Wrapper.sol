@@ -5,6 +5,7 @@ pragma solidity 0.7.4;
 /// @dev works for both Peas and Porridge contracts:
 abstract contract PotInterface {
     function balanceOf(address) public virtual returns(uint);
+    function name() public virtual returns(string memory);
     function mint(address, uint) public virtual;
     function burn(address, uint) public virtual;
 }
@@ -15,10 +16,14 @@ abstract contract PotInterface {
 /// @dev For academic use only
 contract Wrapper {
 
-    address Hot; // Address of Peas token "Hot"
-    address Cold; // Address of Peas token "Cold"
-    address Porridge; // Address of "Porridge" token
+    address Hot;           // Address of Peas token "Hot"
+    address Cold;          // Address of Peas token "Cold"
+    address Porridge;      // Address of "Porridge" token
     PotInterface porridge; // Porridge contract interface.
+
+    /// @dev ERC20 outputs events so this is functionally redundant
+    /// @dev Just wanted to demonstrate I can write/use and event.
+    event Swapped(string from, string to, uint amount);
 
     /// @notice Records addresses of affected tokens
     /// @param Hot_ address of Peas contract "Hot" token
@@ -42,6 +47,7 @@ contract Wrapper {
         peas.burn(msg.sender, amount);
         // Interactions
         porridge.mint(msg.sender, amount);
+        emit Swapped(peas.name(),porridge.name(),amount);
     }
 
     /// @notice Swap Porridge for an equal amount of Hot or Cold Peas.
@@ -57,5 +63,6 @@ contract Wrapper {
         // Interactions
         PotInterface peas= PotInterface(peas_);
         peas.mint(msg.sender, amount);
+        emit Swapped(porridge.name(), peas.name(), amount);
     }
 }
