@@ -45,4 +45,12 @@ contract Porridge is ERC20, AccessControl {
         _burn(account, amount * (10 ** TOKEN_DECIMALS));
     }
 
+    /// @notice Transfer tokens from sender to given address.
+    /// @dev override of parent function.  Permissioned by message.
+    /// @param recipient address to receive funds.
+    /// @param amount of funds to send.
+    function transfer(address recipient, uint256 amount) public override returns (bool) {
+        _transfer(_msgSender(), recipient, amount * (10 ** TOKEN_DECIMALS));
+        return true;
+    }
 }

@@ -170,6 +170,45 @@ describe('9DaysOld', function () {
             .withArgs(OWNER_ADDRESS, NULL_ADDRESS, fiftyTokens.toString());
         });
 
+        it("can transfer 'Porridge' to a given address and produce a correct reciept", async function () {
+            const addressList = await ethers.getSigners();
+            const outputTokenDecimation = await this.outputToken.decimals();
+            const TokenUnit = decimationBase.pow(outputTokenDecimation);
+            const fiftyTokens = TokenUnit.mul(50);
+            await this.outputToken.setMinter(OWNER_ADDRESS);
+            await this.outputToken.mint(OWNER_ADDRESS,100);
+            // Burn OWNER_ADDRESS' Porridge tokens from a different address.
+            expect(await this.outputToken.transfer(addressList[1].address, 50))
+                .to.emit(this.outputToken, "Transfer")
+                .withArgs(OWNER_ADDRESS, addressList[1].address, '50000000000000000000');
+        });
+
+        it("can transfer 'Porridge' to a given address and the given address receives the funds.", async function () {
+            const addressList = await ethers.getSigners();
+            const outputTokenDecimation = await this.outputToken.decimals();
+            const TokenUnit = decimationBase.pow(outputTokenDecimation);
+            const fiftyTokens = TokenUnit.mul(50);
+            await this.outputToken.setMinter(OWNER_ADDRESS);
+            await this.outputToken.mint(OWNER_ADDRESS,100);
+            // Burn OWNER_ADDRESS' Porridge tokens from a different address.
+            await this.outputToken.transfer(addressList[1].address, 50);
+            expect(await this.outputToken.balanceOf(addressList[1].address))
+                .to.equal('50000000000000000000');
+        });
+
+        it("can transfer 'Porridge' to a given address and the senders funds are reduced.", async function () {
+            const addressList = await ethers.getSigners();
+            const outputTokenDecimation = await this.outputToken.decimals();
+            const TokenUnit = decimationBase.pow(outputTokenDecimation);
+            const fiftyTokens = TokenUnit.mul(50);
+            await this.outputToken.setMinter(OWNER_ADDRESS);
+            await this.outputToken.mint(OWNER_ADDRESS,100);
+            // Burn OWNER_ADDRESS' Porridge tokens from a different address.
+            await this.outputToken.transfer(addressList[1].address, 50);
+            expect(await this.outputToken.balanceOf(OWNER_ADDRESS))
+                .to.equal("50000000000000000000");
+        });
+
     });
 
     // Test Wrapper contract (not an ERC20).

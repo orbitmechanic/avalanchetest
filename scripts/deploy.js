@@ -14,12 +14,52 @@ async function main() {
   // await hre.run('compile');
 
   // We get the contract to deploy
-  const Coin = await hre.ethers.getContractFactory("CustomCoin");
-  const coin = await Coin.deploy();
+  const TEACHER_ADDRESS = '0x808cE8deC9E10beD8d0892aCEEf9F1B8ec2F52Bd';
 
-  await coin.deployed();
+  const [deployer] = await ethers.getSigners();
 
-  console.log("Coin deployed to:", coin.address);
+  console.log( "Deploying contracts with the account:", 
+    deployer.address
+  );
+
+  console.log("Account balance:", 
+    (await deployer.getBalance()).toString()
+  );
+
+  /// @notice Deploy 'Hot' and 'Cold' 'Peas', 2000 premint each.
+  const Peas = await hre.ethers.getContractFactory("Peas");
+  const hot = await Peas.deploy('Hot','HOT', 2000);  
+  console.log("'Hot' deployed to: ", hot.address);
+  const cold = await Peas.deploy('Cold','COLD',2000);
+  console.log("'Cold' deployed to:" , cold.address);
+
+  /// @notice Deploy 'Porridge'.
+  const Porridge= await hre.ethers.getContractFactory("Porridge");
+  const porridge = await Porridge.deploy();
+  console.log("'Porridge' deployed to:" , porridge.address);
+
+  /// @notice Deploy 'Wrapper' with addresses of 'Hot','Cold', and 'Porridge'.
+  const Wrapper = await hre.ethers.getContractFactory('Wrapper');
+  const wrapper = await Wrapper.deploy(hot.address,cold.address,porridge.address);
+  console.log("'Wrapper' deployed to:" , wrapper.address);
+
+  /// @notice Grant 'Wrapper' address MINTER_ROLE in 'Porridge'.
+  await porridge.setMinter(wrapper.address);
+  console.log("'Wrapper' set to 'Porridge' minter.")
+
+  /// @notice Swap 500 each of 'Hot' and 'Cold' 'Peas' for 1000 'Porridge'.
+  await wrapper.swap(hot.address,5000);
+  console.log("500 'Hot' converted to 500 'Porridge'");
+  await wrapper.swap(cold.address,500);
+  console.log("500 'Cold' converted to 500 'Porridge'");
+
+  /// @notice Transfer 10000 'Porridge' to TEACHER_ADDRESS.
+  await porridge.transfer(TEACHER_ADDRESS,1000);
+  console.log("1000 'Porridge' transfered to TEACHER_ADDRESS.");
+  console.log('TEACHER_ADDRESS:' + TEACHER_ADDRESS);
+
+  /// @notice End of challenge.
+  console.log('End of challenge.');
   
 }
 
