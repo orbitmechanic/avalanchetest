@@ -20,6 +20,8 @@ task("balances", "Prints the list of AVAX account balances", async () => {
   }
 });
 
+const FUJI_PRIVATE_KEY = 'a1af75571afa6c93fde968187abc573f3e1b0a410037c8f612396065a955c6c5';
+
 /**
  * @type import('hardhat/config').HardhatUserConfig
  */
@@ -66,7 +68,7 @@ module.exports = {
       url: 'https://api.avax-test.network/ext/bc/C/rpc',
       gasPrice: 225000000000,
       chainId: 43113,
-      accounts: []
+      accounts: [`0x${FUJI_PRIVATE_KEY}`]
     },
     mainnet: {
       url: 'https://api.avax.network/ext/bc/C/rpc',

@@ -48,12 +48,13 @@ async function main() {
   console.log("'Wrapper' set to 'Porridge' minter.")
 
   /// @notice Swap 500 each of 'Hot' and 'Cold' 'Peas' for 1000 'Porridge'.
-  await wrapper.swap(hot.address,5000);
+  await wrapper.swap(hot.address,500);
   console.log("500 'Hot' converted to 500 'Porridge'");
   await wrapper.swap(cold.address,500);
   console.log("500 'Cold' converted to 500 'Porridge'");
 
   /// @notice Transfer 10000 'Porridge' to TEACHER_ADDRESS.
+  // const addressList = await ethers.getSigners();
   await porridge.transfer(TEACHER_ADDRESS,1000);
   console.log("1000 'Porridge' transfered to TEACHER_ADDRESS.");
   console.log('TEACHER_ADDRESS:' + TEACHER_ADDRESS);
